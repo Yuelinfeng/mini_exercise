@@ -48,11 +48,13 @@ def cmd_env_check(args: Any) -> None:
         import transformers
 
         info["transformers"] = transformers.__version__
-        major = int(transformers.__version__.split(".", 1)[0])
-        if major >= 5:
+        parts = transformers.__version__.split(".")
+        major = int(parts[0])
+        minor = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+        if major >= 5 or (major == 4 and minor >= 41):
             warnings.append(
-                "DeepSeek-V2-Lite remote code imports APIs removed in transformers 5.x. "
-                "Use transformers==4.57.1 for trace collection."
+                "DeepSeek-V2-Lite remote code expects older DynamicCache.seen_tokens behavior. "
+                "Use transformers==4.40.2 for trace collection."
             )
     except Exception as exc:
         info["transformers_error"] = repr(exc)

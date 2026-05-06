@@ -5,4 +5,4 @@ protobuf
 safetensors
 sentencepiece
 tqdm
-transformers==4.57.1
+transformers==4.40.2

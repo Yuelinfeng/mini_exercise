@@ -96,13 +96,13 @@ HF_ENDPOINT=https://hf-mirror.com RUN_MODEL=1 bash scripts/run_deepseek_cache_pr
 
 The `env-check` JSON should contain `"HF_ENDPOINT": "https://hf-mirror.com"`. `collect-trace` also prints `HF_ENDPOINT=...` before loading the tokenizer/model.
 
-If `collect-trace` fails with `ImportError: cannot import name 'is_torch_fx_available'`, the model download has already succeeded and the remaining issue is `transformers` compatibility. Fix it in the active conda environment:
+If `collect-trace` fails with `ImportError: cannot import name 'is_torch_fx_available'` or `AttributeError: 'DynamicCache' object has no attribute 'seen_tokens'`, the model download has already succeeded and the remaining issue is `transformers` compatibility. Fix it in the active conda environment:
 
 ```bash
-pip install -U --force-reinstall "transformers==4.57.1"
+pip install -U --force-reinstall "transformers==4.40.2"
 python scripts/deepseek_cache_prefetch_experiment.py env-check \
   --output /root/autodl-tmp/deepseek_cache_prefetch/env_check.json
-HF_ENDPOINT=https://hf-mirror.com RUN_MODEL=1 bash scripts/run_deepseek_cache_prefetch_smoke.sh
+HF_ENDPOINT=https://hf-mirror.com LOCAL_FILES_ONLY=1 RUN_MODEL=1 bash scripts/run_deepseek_cache_prefetch_smoke.sh
 ```
 
 ## 5. 主实验命令
