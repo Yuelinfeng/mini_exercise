@@ -53,6 +53,39 @@ def install_flash_attn_import_stub() -> None:
     sys.modules.setdefault("flash_attn.bert_padding", bert_padding)
 
 
+def install_bnb_dispatch_model_patch() -> None:
+    """Skip a redundant `.to(device)` dispatch for bitsandbytes models.
+
+    Some transformers/accelerate combinations try to move a 4-bit/8-bit model
+    after bitsandbytes has already placed quantized weights. bitsandbytes
+    correctly rejects that `.to()` call, so we keep the already-loaded model.
+    """
+
+    try:
+        import accelerate.big_modeling as big_modeling
+        import transformers.modeling_utils as modeling_utils
+    except Exception:
+        return
+
+    original = getattr(big_modeling, "dispatch_model", None)
+    if original is None or getattr(original, "_bnb_to_patch", False):
+        return
+
+    def dispatch_model_bnb_safe(model: Any, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return original(model, *args, **kwargs)
+        except ValueError as exc:
+            message = str(exc)
+            if ".to` is not supported for `4-bit` or `8-bit` bitsandbytes models" not in message:
+                raise
+            print("Skipping redundant accelerate dispatch .to() for bitsandbytes quantized model.")
+            return model
+
+    dispatch_model_bnb_safe._bnb_to_patch = True  # type: ignore[attr-defined]
+    big_modeling.dispatch_model = dispatch_model_bnb_safe
+    modeling_utils.dispatch_model = dispatch_model_bnb_safe
+
+
 def prompt_hash(prompt: str) -> str:
     return hashlib.sha1(prompt.encode("utf-8")).hexdigest()[:16]
 
@@ -256,6 +289,8 @@ def load_model_and_tokenizer(args: Any) -> tuple[Any, Any]:
 
     if args.flash_attn_stub:
         install_flash_attn_import_stub()
+    if args.quantization in {"4bit", "8bit"}:
+        install_bnb_dispatch_model_patch()
 
     endpoint = os.environ.get("HF_ENDPOINT", "<default huggingface.co>")
     print(f"HF_ENDPOINT={endpoint}")
