@@ -3,7 +3,10 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import sys
 import time
+import types
+from importlib.machinery import ModuleSpec
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +14,43 @@ from .io_utils import read_jsonl, write_json, write_jsonl
 
 
 LAYER_RE = re.compile(r"(?:^|\.)layers\.(\d+)(?:\.|$)")
+
+
+def install_flash_attn_import_stub() -> None:
+    """Let DeepSeek remote code import without compiling flash-attn.
+
+    DeepSeek-V2's modeling file conditionally imports flash_attn, but older
+    transformers versions still perform a static dependency check before import.
+    This stub is only safe when attention implementation is not flash_attention_2.
+    """
+
+    try:
+        import flash_attn  # noqa: F401
+
+        return
+    except Exception:
+        pass
+
+    def unavailable(*args: Any, **kwargs: Any) -> None:
+        raise RuntimeError(
+            "flash_attn stub was called. Run with --attn-implementation eager "
+            "or install a real flash-attn package."
+        )
+
+    flash_attn = types.ModuleType("flash_attn")
+    flash_attn.__spec__ = ModuleSpec("flash_attn", loader=None, is_package=True)
+    flash_attn.__path__ = []
+    flash_attn.flash_attn_func = unavailable
+    flash_attn.flash_attn_varlen_func = unavailable
+
+    bert_padding = types.ModuleType("flash_attn.bert_padding")
+    bert_padding.__spec__ = ModuleSpec("flash_attn.bert_padding", loader=None)
+    bert_padding.index_first_axis = unavailable
+    bert_padding.pad_input = unavailable
+    bert_padding.unpad_input = unavailable
+
+    sys.modules.setdefault("flash_attn", flash_attn)
+    sys.modules.setdefault("flash_attn.bert_padding", bert_padding)
 
 
 def prompt_hash(prompt: str) -> str:
@@ -214,6 +254,9 @@ def load_model_and_tokenizer(args: Any) -> tuple[Any, Any]:
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
+    if args.flash_attn_stub:
+        install_flash_attn_import_stub()
+
     endpoint = os.environ.get("HF_ENDPOINT", "<default huggingface.co>")
     print(f"HF_ENDPOINT={endpoint}")
 
@@ -257,6 +300,7 @@ def load_model_and_tokenizer(args: Any) -> tuple[Any, Any]:
         max_memory=max_memory,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
+        attn_implementation=args.attn_implementation,
     )
     model.eval()
     return model, tokenizer

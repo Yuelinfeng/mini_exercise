@@ -137,6 +137,8 @@ def build_parser() -> argparse.ArgumentParser:
     trace.add_argument("--max-cpu-memory", default="42GiB")
     trace.add_argument("--local-files-only", action="store_true")
     trace.add_argument("--trust-remote-code", action="store_true", default=True)
+    trace.add_argument("--attn-implementation", default="eager")
+    trace.add_argument("--flash-attn-stub", action="store_true", default=True)
     trace.add_argument("--use-slow-tokenizer", action="store_true")
     trace.set_defaults(func=collect_trace)
 
