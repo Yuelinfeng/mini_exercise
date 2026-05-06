@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import time
 from pathlib import Path
@@ -213,6 +214,9 @@ def load_model_and_tokenizer(args: Any) -> tuple[Any, Any]:
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
+    endpoint = os.environ.get("HF_ENDPOINT", "<default huggingface.co>")
+    print(f"HF_ENDPOINT={endpoint}")
+
     quantization_config = None
     if args.quantization in {"4bit", "8bit"}:
         from transformers import BitsAndBytesConfig
@@ -343,4 +347,3 @@ def collect_trace(args: Any) -> None:
         }
         write_json(args.meta_output, meta)
     print(f"wrote trace events: {args.output}")
-

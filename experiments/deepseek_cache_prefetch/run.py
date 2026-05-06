@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 from pathlib import Path
 from typing import Any
@@ -13,9 +14,23 @@ from .workloads import write_prompts, write_workload_sanity
 
 
 def cmd_env_check(args: Any) -> None:
+    warnings: list[str] = []
     info: dict[str, Any] = {
         "python": platform.python_version(),
         "platform": platform.platform(),
+        "compatibility_warnings": warnings,
+        "env": {
+            name: os.environ.get(name)
+            for name in (
+                "HF_ENDPOINT",
+                "HF_HOME",
+                "HUGGINGFACE_HUB_CACHE",
+                "TRANSFORMERS_CACHE",
+                "TMPDIR",
+                "PIP_CACHE_DIR",
+                "HF_HUB_OFFLINE",
+            )
+        },
     }
     try:
         import torch
@@ -33,6 +48,12 @@ def cmd_env_check(args: Any) -> None:
         import transformers
 
         info["transformers"] = transformers.__version__
+        major = int(transformers.__version__.split(".", 1)[0])
+        if major >= 5:
+            warnings.append(
+                "DeepSeek-V2-Lite remote code imports APIs removed in transformers 5.x. "
+                "Use transformers==4.57.1 for trace collection."
+            )
     except Exception as exc:
         info["transformers_error"] = repr(exc)
     try:

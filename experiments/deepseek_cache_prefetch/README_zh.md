@@ -28,6 +28,7 @@ apt: unavailable
 ```bash
 cd /root/autodl-tmp/Reccurence_paper
 
+export HF_ENDPOINT=https://hf-mirror.com
 export HF_HOME=/root/autodl-tmp/hf_home
 export HUGGINGFACE_HUB_CACHE=/root/autodl-tmp/hf_home/hub
 export TRANSFORMERS_CACHE=/root/autodl-tmp/hf_home/transformers
@@ -66,7 +67,7 @@ bash scripts/run_deepseek_cache_prefetch_smoke.sh
 先只跑极小规模：
 
 ```bash
-RUN_MODEL=1 bash scripts/run_deepseek_cache_prefetch_smoke.sh
+HF_ENDPOINT=https://hf-mirror.com RUN_MODEL=1 bash scripts/run_deepseek_cache_prefetch_smoke.sh
 ```
 
 默认模型：
@@ -82,6 +83,26 @@ MODEL=/root/autodl-tmp/models/DeepSeek-V2-Lite \
 LOCAL_FILES_ONLY=1 \
 RUN_MODEL=1 \
 bash scripts/run_deepseek_cache_prefetch_smoke.sh
+```
+
+Hugging Face mirror troubleshooting:
+
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+python scripts/deepseek_cache_prefetch_experiment.py env-check \
+  --output /root/autodl-tmp/deepseek_cache_prefetch/env_check.json
+HF_ENDPOINT=https://hf-mirror.com RUN_MODEL=1 bash scripts/run_deepseek_cache_prefetch_smoke.sh
+```
+
+The `env-check` JSON should contain `"HF_ENDPOINT": "https://hf-mirror.com"`. `collect-trace` also prints `HF_ENDPOINT=...` before loading the tokenizer/model.
+
+If `collect-trace` fails with `ImportError: cannot import name 'is_torch_fx_available'`, the model download has already succeeded and the remaining issue is `transformers` compatibility. Fix it in the active conda environment:
+
+```bash
+pip install -U --force-reinstall "transformers==4.57.1"
+python scripts/deepseek_cache_prefetch_experiment.py env-check \
+  --output /root/autodl-tmp/deepseek_cache_prefetch/env_check.json
+HF_ENDPOINT=https://hf-mirror.com RUN_MODEL=1 bash scripts/run_deepseek_cache_prefetch_smoke.sh
 ```
 
 ## 5. 主实验命令

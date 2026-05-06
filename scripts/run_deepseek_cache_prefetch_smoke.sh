@@ -12,11 +12,14 @@ mkdir -p "$OUT" "$OUT/normal" "$OUT/2x2"
 export HF_HOME="${HF_HOME:-/root/autodl-tmp/hf_home}"
 export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/root/autodl-tmp/hf_home/hub}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-/root/autodl-tmp/hf_home/transformers}"
+export HF_ENDPOINT="${HF_ENDPOINT:-https://hf-mirror.com}"
 export TMPDIR="${TMPDIR:-/root/autodl-tmp/tmp}"
 export PIP_CACHE_DIR="${PIP_CACHE_DIR:-/root/autodl-tmp/pip_cache}"
 mkdir -p "$HF_HOME" "$HUGGINGFACE_HUB_CACHE" "$TRANSFORMERS_CACHE" "$TMPDIR" "$PIP_CACHE_DIR"
 
 cd "$ROOT"
+
+echo "HF_ENDPOINT=$HF_ENDPOINT"
 
 python scripts/deepseek_cache_prefetch_experiment.py env-check \
   --output "$OUT/env_check.json"
