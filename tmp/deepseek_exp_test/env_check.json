@@ -1,0 +1,9 @@
+{
+  "bitsandbytes_error": "ModuleNotFoundError(\"No module named 'bitsandbytes'\")",
+  "cuda_available": false,
+  "cuda_version": null,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.11.7",
+  "torch": "2.11.0+cpu",
+  "transformers": "5.3.0"
+}

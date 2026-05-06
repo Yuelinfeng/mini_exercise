@@ -1,0 +1,5 @@
+dataset,condition,num_requests,domain_counts,primary_domain_counts,mean_mix_fraction,min_prompt_words,max_prompt_words,mean_prompt_words
+2x2,shifted_homogeneous,2,{'translation': 2},{'translation': 2},1.0,27,29,28.0
+2x2,shifted_mixed,2,{'mixed': 2},{'translation': 2},0.8,40,42,41.0
+2x2,stable_homogeneous,2,{'translation': 2},{'translation': 2},1.0,27,29,28.0
+2x2,stable_mixed,2,{'mixed': 2},{'translation': 2},0.5,41,47,44.0

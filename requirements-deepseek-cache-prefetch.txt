@@ -1,0 +1,9 @@
+accelerate
+bitsandbytes
+datasets
+protobuf
+safetensors
+sentencepiece
+tqdm
+transformers
+
