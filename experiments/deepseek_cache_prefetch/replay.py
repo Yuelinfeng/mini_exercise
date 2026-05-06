@@ -219,6 +219,8 @@ def replay_policy(
                 account_evicted(evicted)
             else:
                 transient_buffer[record.key] = record
+        for issue_id in completed_ids:
+            pending.pop(issue_id, None)
         for key, record in list(transient_buffer.items()):
             if record.expire_time < current_time and not record.consumed:
                 counters["prefetch_expired_unused"] += 1
@@ -245,6 +247,9 @@ def replay_policy(
         if cfg["cache"] and target in cache:
             record.redundant_reason = "already_in_cache"
             counters["prefetch_redundant_at_issue"] += 1
+        elif not cfg["cache"] and target in transient_buffer and transient_buffer[target].expire_time >= current_time:
+            record.redundant_reason = "already_in_prefetch_buffer"
+            counters["prefetch_duplicate"] += 1
         elif any(
             pending_record.key == target
             and not pending_record.consumed
